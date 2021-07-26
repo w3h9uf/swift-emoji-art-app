@@ -43,6 +43,8 @@ class EmojiArtDocument: ObservableObject {
       DispatchQueue.global(qos: .userInitiated).async {
         let imageData = try? Data(contentsOf: url)
         DispatchQueue.main.async { [weak self] in
+          // publishing changes in background thread is not allowed (can cause unpredictable UI behavior)
+          // put the publishing operation back to main queue. 
           self?.backgroundImageFetchStatus = .idle
           if self?.emojiArt.background == EmojiArtModel.Background.url(url) {
             if imageData != nil {
