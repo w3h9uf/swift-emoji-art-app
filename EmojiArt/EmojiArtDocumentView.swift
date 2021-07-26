@@ -19,14 +19,21 @@ struct EmojiArtDocumentView: View {
   var documentBody: some View {
     GeometryReader { geometry in
       ZStack {
-        Color.yellow
+        Color.yellow.overlay(
+          OptionalImage(uiImage: document.backgroundImage)
+            .position(convertFromEmojiCoordinates((0,0), in: geometry))
+          //Image("test_bg").resizable().scaledToFill().position(convertFromEmojiCoordinates((0,0), in: geometry))
+        )
+        if document.backgroundImageFetchStatus == .fectching {
+          ProgressView().scaleEffect(2)
+        }
         ForEach(document.emojis) { emoji in
           Text(emoji.text)
             .font(.system(size: fontSize(for: emoji)))
             .position(position(for: emoji, in: geometry))
         }
       }
-      .onDrop(of: [.plainText], isTargeted: nil) { providers, location in
+      .onDrop(of: [.plainText, .url, .image], isTargeted: nil) { providers, location in
         return drop(providers: providers, at: location, in: geometry)
       }
     }
@@ -54,7 +61,7 @@ struct EmojiArtDocumentView: View {
   private func convertFromEmojiCoordinates(_ location: (x: Int, y: Int), in geometry: GeometryProxy) -> CGPoint {
     let center = geometry.frame(in: .local).center
     return CGPoint(x: center.x + CGFloat(location.x),
-                   y: center.x + CGFloat(location.y))
+                   y: center.y + CGFloat(location.y))
   }
   
   private func convertToEmojiCoordinates(_ location: CGPoint, in geometry: GeometryProxy) -> (x: Int, y: Int) {
@@ -64,14 +71,27 @@ struct EmojiArtDocumentView: View {
   }
   
   private func drop(providers: [NSItemProvider], at location: CGPoint, in geometry: GeometryProxy) -> Bool {
-    return providers.loadObjects(ofType: String.self) { string in
-      if let emoji = string.first {
-        document.addEmoji(
-          String(emoji),
-          at: convertToEmojiCoordinates(location, in: geometry),
-          size: Constants.EmojiTextFont)
+    var found = providers.loadObjects(ofType: URL.self) { url in
+      document.setBackground(EmojiArtModel.Background.url(url.imageURL))
+    }
+    if !found {
+      found = providers.loadObjects(ofType: UIImage.self) { image in
+        if let data = image.jpegData(compressionQuality: 1.0) {
+          document.setBackground(.imageData(data))
+        }
       }
     }
+    if !found {
+      found = providers.loadObjects(ofType: String.self) { string in
+        if let emoji = string.first {
+          document.addEmoji(
+            String(emoji),
+            at: convertToEmojiCoordinates(location, in: geometry),
+            size: Constants.EmojiTextFont)
+        }
+      }
+    }
+    return found
   }
   
 }
