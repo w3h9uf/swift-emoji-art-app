@@ -39,8 +39,8 @@ class EmojiArtDocument: ObservableObject {
     switch emojiArt.background {
     case .url(let url):
       // fetch the url
+      self.backgroundImageFetchStatus = .fectching
       DispatchQueue.global(qos: .userInitiated).async {
-        self.backgroundImageFetchStatus = .fectching
         let imageData = try? Data(contentsOf: url)
         DispatchQueue.main.async { [weak self] in
           self?.backgroundImageFetchStatus = .idle
