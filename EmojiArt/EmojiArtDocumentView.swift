@@ -41,6 +41,7 @@ struct EmojiArtDocumentView: View {
       .onDrop(of: [.plainText, .url, .image], isTargeted: nil) { providers, location in
         return drop(providers: providers, at: location, in: geometry)
       }
+      .gesture(zoomGesture())
     }
   }
   
@@ -101,7 +102,12 @@ struct EmojiArtDocumentView: View {
   }
   
   // It makes sense to have zoomScale a UI state since it has nothing to do with model
-  @State private var zoomScale: CGFloat = 1
+  @State private var steadyStateZoomScale: CGFloat = 1
+  @GestureState private var gestureZoomScale: CGFloat = 1
+  
+  private var zoomScale: CGFloat {
+    gestureZoomScale * steadyStateZoomScale
+  }
   
   private func doubleTapToZoom(in size: CGSize) -> some Gesture {
     TapGesture(count: 2)
@@ -112,12 +118,23 @@ struct EmojiArtDocumentView: View {
       }
   }
   
+  private func zoomGesture() -> some Gesture {
+    MagnificationGesture()
+      .updating($gestureZoomScale) { lastedGestureScale, gestureZoomScale/*this is an inout*/, transaction in
+        gestureZoomScale = lastedGestureScale
+      }
+      .onEnded { gestureScaleAtEnd in
+        steadyStateZoomScale *= gestureScaleAtEnd
+        
+      }
+  }
+  
   private func zoomToFit(_ imageOrNil: UIImage?, in size: CGSize) {
     if let image = imageOrNil, image.size.width > 0,
        image.size.height > 0, size.width > 0, size.height > 0 {
       let hZoom = size.width / image.size.width
       let vZoom = size.width / image.size.height
-      zoomScale = min(hZoom, vZoom)
+      steadyStateZoomScale = min(hZoom, vZoom)
     }
   }
   
