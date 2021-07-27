@@ -41,7 +41,7 @@ struct EmojiArtDocumentView: View {
       .onDrop(of: [.plainText, .url, .image], isTargeted: nil) { providers, location in
         return drop(providers: providers, at: location, in: geometry)
       }
-      .gesture(zoomGesture())
+      .gesture(panGesture().simultaneously(with: zoomGesture()))
     }
   }
   
@@ -66,14 +66,14 @@ struct EmojiArtDocumentView: View {
   
   private func convertFromEmojiCoordinates(_ location: (x: Int, y: Int), in geometry: GeometryProxy) -> CGPoint {
     let center = geometry.frame(in: .local).center
-    return CGPoint(x: center.x + CGFloat(location.x) * zoomScale,
-                   y: center.y + CGFloat(location.y) * zoomScale)
+    return CGPoint(x: center.x + CGFloat(location.x) * zoomScale + panOffset.width,
+                   y: center.y + CGFloat(location.y) * zoomScale + panOffset.height)
   }
   
   private func convertToEmojiCoordinates(_ location: CGPoint, in geometry: GeometryProxy) -> (x: Int, y: Int) {
     let center = geometry.frame(in: .local).center
-    let location = CGPoint(x: (location.x - center.x) / zoomScale,
-                           y: (location.y - center.y) / zoomScale)
+    let location = CGPoint(x: (location.x - center.x - panOffset.width) / zoomScale,
+                           y: (location.y - center.y - panOffset.height) / zoomScale)
     return (Int(location.x), Int(location.y))
   }
   
@@ -100,6 +100,26 @@ struct EmojiArtDocumentView: View {
     }
     return found
   }
+  
+  
+  @State private var steadyStatePanOffset: CGSize = CGSize.zero
+  @GestureState private var gesturePanOffset: CGSize = CGSize.zero
+  
+  private var panOffset: CGSize {
+    (steadyStatePanOffset + gesturePanOffset) * zoomScale
+  }
+  
+  private func panGesture() -> some Gesture {
+    DragGesture()
+      .updating($gesturePanOffset) { latestDragGestureValue, gesturePanOffset, _ in
+        gesturePanOffset = latestDragGestureValue.translation / zoomScale
+      }
+      .onEnded { finalDragGestureValue in
+        steadyStatePanOffset = steadyStatePanOffset + (finalDragGestureValue.translation / zoomScale)
+        
+      }
+  }
+  
   
   // It makes sense to have zoomScale a UI state since it has nothing to do with model
   @State private var steadyStateZoomScale: CGFloat = 1
@@ -134,9 +154,13 @@ struct EmojiArtDocumentView: View {
        image.size.height > 0, size.width > 0, size.height > 0 {
       let hZoom = size.width / image.size.width
       let vZoom = size.width / image.size.height
+      steadyStatePanOffset = .zero
       steadyStateZoomScale = min(hZoom, vZoom)
     }
   }
+  
+  
+  
   
 }
 
