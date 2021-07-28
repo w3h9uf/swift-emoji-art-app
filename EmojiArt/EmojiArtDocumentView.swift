@@ -25,15 +25,25 @@ struct EmojiArtDocumentView: View {
             .position(convertFromEmojiCoordinates((0,0), in: geometry))
           //Image("test_bg").resizable().scaledToFill().position(convertFromEmojiCoordinates((0,0), in: geometry))
         )
-        .gesture(doubleTapToZoom(in: geometry.size))
+        .gesture(doubleTapToZoom(in: geometry.size)
+                  .exclusively(before: deselectAllEmojisGesture()))
         if document.backgroundImageFetchStatus == .fectching {
           ProgressView().scaleEffect(2)
         } else {
           ForEach(document.emojis) { emoji in
-            Text(emoji.text)
+            Group {
+              if selectedEmoji.contains(emoji) {
+                Text(emoji.text)
+                  .overlay(Rectangle()
+                            .stroke(style: StrokeStyle(lineWidth: 1, dash: [4])))
+              } else {
+                Text(emoji.text)
+              }
+            }
               .font(.system(size: fontSize(for: emoji)))
               .scaleEffect(zoomScale)
               .position(position(for: emoji, in: geometry))
+              .gesture(selectGesture(for: emoji))
           }
         }
       }
@@ -101,7 +111,7 @@ struct EmojiArtDocumentView: View {
     return found
   }
   
-  
+  // background pan gesture
   @State private var steadyStatePanOffset: CGSize = CGSize.zero
   @GestureState private var gesturePanOffset: CGSize = CGSize.zero
   
@@ -120,7 +130,7 @@ struct EmojiArtDocumentView: View {
       }
   }
   
-  
+  // background zoom gesture
   // It makes sense to have zoomScale a UI state since it has nothing to do with model
   @State private var steadyStateZoomScale: CGFloat = 1
   @GestureState private var gestureZoomScale: CGFloat = 1
@@ -159,7 +169,30 @@ struct EmojiArtDocumentView: View {
     }
   }
   
+  // emoji select gesture
+  @State private var selectedEmoji: Array<EmojiArtModel.Emoji> = []
   
+  private func selectGesture(for emoji: EmojiArtModel.Emoji) -> some Gesture {
+    TapGesture()
+      .onEnded {
+        addOrDeleteSelectedEmoji(emoji)
+      }
+  }
+  
+  private func deselectAllEmojisGesture() -> some Gesture {
+    TapGesture()
+      .onEnded {
+        selectedEmoji.removeAll()
+      }
+  }
+  
+  private func addOrDeleteSelectedEmoji(_ emoji: EmojiArtModel.Emoji) {
+    if let index = selectedEmoji.firstIndex(of: emoji) {
+      selectedEmoji.remove(at: index)
+    } else {
+      selectedEmoji.append(emoji)
+    }
+  }
   
   
 }
