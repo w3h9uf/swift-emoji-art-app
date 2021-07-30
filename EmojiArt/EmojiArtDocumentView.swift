@@ -31,17 +31,10 @@ struct EmojiArtDocumentView: View {
           ProgressView().scaleEffect(2)
         } else {
           ForEach(document.emojis) { emoji in
-            Group {
-              if selectedEmoji.contains(emoji) {
-                Text(emoji.text)
-                  .overlay(Rectangle()
-                            .stroke(style: StrokeStyle(lineWidth: 1, dash: [4])))
-              } else {
-                Text(emoji.text)
-              }
-            }
+            Text(emoji.text)
+              .border(Color.blue, width: emojiIsSelected(emoji) ? 2 : 0)
               .font(.system(size: fontSize(for: emoji)))
-              .scaleEffect(zoomScale)
+              .scaleEffect(zoomScale * (emojiIsSelected(emoji) ? gestureEmojiZoomScale : 1))
               .position(position(for: emoji, in: geometry))
               .gesture(selectGesture(for: emoji))
           }
@@ -134,6 +127,7 @@ struct EmojiArtDocumentView: View {
   // It makes sense to have zoomScale a UI state since it has nothing to do with model
   @State private var steadyStateZoomScale: CGFloat = 1
   @GestureState private var gestureZoomScale: CGFloat = 1
+  @GestureState private var gestureEmojiZoomScale: CGFloat = 1
   
   private var zoomScale: CGFloat {
     gestureZoomScale * steadyStateZoomScale
@@ -149,14 +143,26 @@ struct EmojiArtDocumentView: View {
   }
   
   private func zoomGesture() -> some Gesture {
-    MagnificationGesture()
-      .updating($gestureZoomScale) { lastedGestureScale, gestureZoomScale/*this is an inout*/, transaction in
-        gestureZoomScale = lastedGestureScale
+    if selectedEmoji.isEmpty {
+      return MagnificationGesture()
+      .updating($gestureZoomScale) { latestZoomScale, gestureZoomScale/*this is an inout*/, transaction in
+        gestureZoomScale = latestZoomScale
       }
       .onEnded { gestureScaleAtEnd in
         steadyStateZoomScale *= gestureScaleAtEnd
         
       }
+    } else {
+      return MagnificationGesture()
+        .updating($gestureEmojiZoomScale) { latestZoomScale, gestureEmojiZoomScale/*this is an inout*/, transaction in
+          gestureEmojiZoomScale = latestZoomScale
+        }
+        .onEnded { gestureScaleAtEnd in
+          for emoji in selectedEmoji {
+            document.scaleEmoji(emoji, by: gestureScaleAtEnd)
+          }
+        }
+    }
   }
   
   private func zoomToFit(_ imageOrNil: UIImage?, in size: CGSize) {
@@ -169,8 +175,12 @@ struct EmojiArtDocumentView: View {
     }
   }
   
-  // emoji select gesture
+  // MARK: - EmojiSelectGesture
   @State private var selectedEmoji: Array<EmojiArtModel.Emoji> = []
+  
+  private func emojiIsSelected(_ emoji: EmojiArtModel.Emoji) -> Bool {
+    return selectedEmoji.firstIndex(where: { $0.id == emoji.id }) != nil
+  }
   
   private func selectGesture(for emoji: EmojiArtModel.Emoji) -> some Gesture {
     TapGesture()
@@ -187,7 +197,7 @@ struct EmojiArtDocumentView: View {
   }
   
   private func addOrDeleteSelectedEmoji(_ emoji: EmojiArtModel.Emoji) {
-    if let index = selectedEmoji.firstIndex(of: emoji) {
+    if let index = selectedEmoji.firstIndex(where: { $0.id == emoji.id }) {
       selectedEmoji.remove(at: index)
     } else {
       selectedEmoji.append(emoji)
