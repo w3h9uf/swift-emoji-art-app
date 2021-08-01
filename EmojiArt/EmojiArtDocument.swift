@@ -11,6 +11,7 @@ import SwiftUI
 class EmojiArtDocument: ObservableObject {
   @Published private(set) var emojiArt: EmojiArtModel {
     didSet {
+      autosave()
       if emojiArt.background != oldValue.background {
         fetchBackgroundImageDataIfNeccessary()
       }
@@ -21,6 +22,35 @@ class EmojiArtDocument: ObservableObject {
     emojiArt = EmojiArtModel()
 //    emojiArt.addEmoji("😬", at: (100, 200), size: 70)
 //    emojiArt.addEmoji("🙌", at: (-100, -200), size: 100)
+  }
+  
+  private struct Autosave {
+    static let filename = "Autosave.emojiart"
+    static var url: URL? {
+      let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+      return documentDirectory?.appendingPathComponent(filename)
+    }
+  }
+  private func autosave() {
+    if let url = Autosave.url {
+      save(to: url)
+    }
+  }
+  
+  private func save(to url: URL) {
+    let thisFunction = "\(String(describing: self)).\(#function)"
+    do {
+      let data: Data = try emojiArt.json()
+      print("\(thisFunction) jason = \(String(data: data, encoding: .utf8) ?? "nil")")
+      try data.write(to: url)
+      print("\(thisFunction) succeeded")
+    }
+    catch let encodingError where encodingError is EncodingError {
+      print("\(thisFunction) cannot encode EmojiArt into JSON because \(encodingError.localizedDescription)")
+    }
+    catch {
+      print("Failed to \(thisFunction), error = \(error)")
+    }
   }
   
   var emojis: [EmojiArtModel.Emoji] { emojiArt.emojis }
