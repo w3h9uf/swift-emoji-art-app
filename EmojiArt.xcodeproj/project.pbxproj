@@ -18,6 +18,7 @@
 		EC2354E326AE033F00F07E57 /* EmojiArtDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2354E226AE033F00F07E57 /* EmojiArtDocument.swift */; };
 		EC2354E526AE089700F07E57 /* UtilityExtenstions.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2354E426AE089700F07E57 /* UtilityExtenstions.swift */; };
 		EC2354E726AF257100F07E57 /* UtilityViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2354E626AF257100F07E57 /* UtilityViews.swift */; };
+		EC2354E926B7177D00F07E57 /* PaletteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2354E826B7177D00F07E57 /* PaletteStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +56,7 @@
 		EC2354E226AE033F00F07E57 /* EmojiArtDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiArtDocument.swift; sourceTree = "<group>"; };
 		EC2354E426AE089700F07E57 /* UtilityExtenstions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityExtenstions.swift; sourceTree = "<group>"; };
 		EC2354E626AF257100F07E57 /* UtilityViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityViews.swift; sourceTree = "<group>"; };
+		EC2354E826B7177D00F07E57 /* PaletteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaletteStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +117,7 @@
 				EC2354DE26ADFF3000F07E57 /* EmojiArtModel.swift */,
 				EC2354E026AE017900F07E57 /* EmojiArtModel.Background.swift */,
 				EC2354E626AF257100F07E57 /* UtilityViews.swift */,
+				EC2354E826B7177D00F07E57 /* PaletteStore.swift */,
 			);
 			path = EmojiArt;
 			sourceTree = "<group>";
@@ -275,6 +278,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EC2354E726AF257100F07E57 /* UtilityViews.swift in Sources */,
+				EC2354E926B7177D00F07E57 /* PaletteStore.swift in Sources */,
 				EC2354B626ADF21000F07E57 /* EmojiArtDocumentView.swift in Sources */,
 				EC2354B426ADF21000F07E57 /* EmojiArtApp.swift in Sources */,
 				EC2354E326AE033F00F07E57 /* EmojiArtDocument.swift in Sources */,
