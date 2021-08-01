@@ -41,4 +41,13 @@ struct EmojiArtModel: Codable {
   func json() throws -> Data {
     return try JSONEncoder().encode(self)
   }
+  
+  init(json: Data) throws {
+    self = try JSONDecoder().decode(EmojiArtModel.self, from: json)
+  }
+  
+  init(url: URL) throws {
+    let data = try Data(contentsOf: url)
+    self = try EmojiArtModel(json: data)
+  }
 }
