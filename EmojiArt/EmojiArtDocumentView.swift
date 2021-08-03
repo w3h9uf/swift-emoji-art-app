@@ -12,7 +12,7 @@ struct EmojiArtDocumentView: View {
     var body: some View {
       VStack(spacing: 0) {
         documentBody
-        palette
+        PaletteChooser(emojiFontSize: Constants.EmojiTextFont)
       }
     }
   
@@ -48,16 +48,10 @@ struct EmojiArtDocumentView: View {
     }
   }
   
-  var palette: some View {
-    ScrollingEmojisView(emojis: testemojis).font(.system(size: Constants.EmojiTextFont))
-  }
-  
-  let testemojis = "😃👻😺🐢🐠🚗🚌🧘‍♂️🐂😂🤣🤯🤠"
-  
-  
   private struct Constants {
     static let EmojiTextFont: CGFloat = 60
   }
+  
 
   private func fontSize(for emoji: EmojiArtModel.Emoji) -> CGFloat {
     CGFloat(emoji.size)
@@ -223,20 +217,6 @@ struct EmojiArtDocumentView: View {
 }
 
 
-struct ScrollingEmojisView: View {
-  let emojis: String
-  var body: some View {
-    ScrollView(.horizontal) {
-      HStack {
-        ForEach(emojis.map {String($0)}, id: \.self) { emoji in
-          Text(emoji)
-            .onDrag { NSItemProvider(object: emoji as NSString) }
-        }
-      }
-    }
-  }
-
-}
 
 
 
