@@ -38,7 +38,11 @@ struct PaletteChooser: View {
   
   @ViewBuilder
   var contextMenu: some View {
+    AnimatedActionButton(title: "Edit", systemImage: "pencil") {
+      editing = true
+    }
     AnimatedActionButton(title: "New", systemImage: "plus") {
+      editing = true
       store.insertPalette(named: "New", emojis: "", at: chosenPaletteIndex)
     }
     AnimatedActionButton(title: "Delete", systemImage: "minus") {
@@ -73,7 +77,12 @@ struct PaletteChooser: View {
     // So that custom transition can happen
     .id(palette.id)
     .transition(rollTransition)
+    .popover(isPresented: $editing) {
+      PaletteEditor(palette: $store.palettes[chosenPaletteIndex])
+    }
   }
+  
+  @State private var editing = false
   
   var rollTransition: AnyTransition {
     AnyTransition.asymmetric(insertion: .offset(x: 0, y: emojiFontSize),
