@@ -12,6 +12,8 @@ struct PaletteManager: View {
   @Environment(\.colorScheme) var colorScheme
   
   @State private var editMode: EditMode = .inactive
+  @Environment(\.presentationMode) var presentationMode
+  
     var body: some View {
       NavigationView {
         List {
@@ -24,11 +26,26 @@ struct PaletteManager: View {
                 }
               }
           }
+          .onDelete { indexSet in
+            store.palettes.remove(atOffsets: indexSet)
+          }
+          .onMove { indexSet, newOffset in
+            store.palettes.move(fromOffsets: indexSet, toOffset: newOffset)
+            
+          }
         }
         .navigationTitle("Manage Palette")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-          EditButton()
+          ToolbarItem { EditButton() }
+          ToolbarItem(placement: .navigationBarLeading) {
+            if presentationMode.wrappedValue.isPresented,
+               UIDevice.current.userInterfaceIdiom != .pad {
+              Button("Close") {
+                presentationMode.wrappedValue.dismiss()
+              }
+            }
+          }
         }
         .environment(\.editMode, $editMode)
       }
