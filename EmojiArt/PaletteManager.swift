@@ -9,7 +9,9 @@ import SwiftUI
 
 struct PaletteManager: View {
   @EnvironmentObject var store: PaletteStore
+  @Environment(\.colorScheme) var colorScheme
   
+  @State private var editMode: EditMode = .inactive
     var body: some View {
       NavigationView {
         List {
@@ -17,7 +19,7 @@ struct PaletteManager: View {
             NavigationLink(
               destination: PaletteEditor(palette: $store.palettes[palette])) {
                 VStack(alignment: .leading) {
-                  Text(palette.name)
+                  Text(palette.name).font(colorScheme == .dark ? .largeTitle : .caption)
                   Text(palette.emojis)
                 }
               }
@@ -25,6 +27,10 @@ struct PaletteManager: View {
         }
         .navigationTitle("Manage Palette")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+          EditButton()
+        }
+        .environment(\.editMode, $editMode)
       }
     }
 }
