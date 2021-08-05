@@ -14,6 +14,7 @@ struct PaletteEditor: View {
     Form {
       nameSection
       addEmojiSection
+      removeEmojiSection
     }
     .frame(minWidth: 300, minHeight: 350)
   }
@@ -40,6 +41,23 @@ struct PaletteEditor: View {
       palette.emojis = (emojis + palette.emojis)
         .filter { $0.isEmoji }
         .removingDuplicateCharacters
+    }
+  }
+  
+  var removeEmojiSection: some View {
+    Section(header: Text("Remove Emoji")) {
+      let emojis = palette.emojis.removingDuplicateCharacters.map { String($0) }
+      LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], content: {
+        ForEach(emojis, id: \.self) { emoji in
+          Text(emoji)
+            .onTapGesture(perform: {
+              withAnimation {
+                palette.emojis.removeAll(where: { String($0) == emoji })
+              }
+            })
+        }
+      })
+      .font(.system(size: 40))
     }
   }
 }
