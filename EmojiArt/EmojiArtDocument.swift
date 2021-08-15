@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 
 class EmojiArtDocument: ObservableObject {
@@ -78,28 +79,44 @@ class EmojiArtDocument: ObservableObject {
     case failed(URL)
   }
   
+  private var backgroundImageFetchCancellable: AnyCancellable?
+  
   private func fetchBackgroundImageDataIfNeccessary() {
     backgroundImage = nil
     switch emojiArt.background {
     case .url(let url):
       // fetch the url
       self.backgroundImageFetchStatus = .fectching
-      DispatchQueue.global(qos: .userInitiated).async {
-        let imageData = try? Data(contentsOf: url)
-        DispatchQueue.main.async { [weak self] in
-          // publishing changes in background thread is not allowed (can cause unpredictable UI behavior)
-          // put the publishing operation back to main queue. 
-          self?.backgroundImageFetchStatus = .idle
-          if self?.emojiArt.background == EmojiArtModel.Background.url(url) {
-            if imageData != nil {
-              self?.backgroundImage = UIImage(data: imageData!)
-            }
-            if self?.backgroundImage == nil {
-              self?.backgroundImageFetchStatus = .failed(url)
-            }
-          }
+//      DispatchQueue.global(qos: .userInitiated).async {
+//        let imageData = try? Data(contentsOf: url)
+//        DispatchQueue.main.async { [weak self] in
+//          // publishing changes in background thread is not allowed (can cause unpredictable UI behavior)
+//          // put the publishing operation back to main queue.
+//          self?.backgroundImageFetchStatus = .idle
+//          if self?.emojiArt.background == EmojiArtModel.Background.url(url) {
+//            if imageData != nil {
+//              self?.backgroundImage = UIImage(data: imageData!)
+//            }
+//            if self?.backgroundImage == nil {
+//              self?.backgroundImageFetchStatus = .failed(url)
+//            }
+//          }
+//        }
+//              }
+      backgroundImageFetchCancellable?.cancel()
+      let session = URLSession.shared
+      let publisher = session.dataTaskPublisher(for: url)
+        .map { (data, urlResponse) in UIImage(data: data) }
+        .replaceError(with: nil)
+        .receive(on: DispatchQueue.main)
+      backgroundImageFetchCancellable = publisher
+//        .assign(to: \EmojiArtDocument.backgroundImage, on: self)
+        .sink {
+          [weak self] image in
+          self?.backgroundImage = image
+          self?.backgroundImageFetchStatus = (image != nil) ? .idle : .failed(url)
         }
-              }
+      
     case .imageData(let data):
       backgroundImage = UIImage(data: data)
     case .blank:
