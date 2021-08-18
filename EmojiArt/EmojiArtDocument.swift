@@ -7,12 +7,36 @@
 
 import SwiftUI
 import Combine
+import UniformTypeIdentifiers
 
+extension UTType {
+  static let emojiart = UTType(exportedAs: "com.jasonyangjizheng.EmojiArt")
+}
 
-class EmojiArtDocument: ObservableObject {
+class EmojiArtDocument: ReferenceFileDocument {
+  static var readableContentTypes = [UTType.emojiart]
+  static var writableContentTypes = [UTType.emojiart]
+  
+  required init(configuration: ReadConfiguration) throws {
+    if let data = configuration.file.regularFileContents {
+      emojiArt = try EmojiArtModel(json: data)
+      fetchBackgroundImageDataIfNeccessary()
+    } else {
+      throw CocoaError(.fileReadCorruptFile)
+    }
+  }
+  
+  func snapshot(contentType: UTType) throws -> Data {
+    try emojiArt.json()
+  }
+  
+  func fileWrapper(snapshot: Data, configuration: WriteConfiguration) throws -> FileWrapper {
+    FileWrapper(regularFileWithContents: snapshot)
+  }
+  
   @Published private(set) var emojiArt: EmojiArtModel {
     didSet {
-      scheduleAutosave()
+      //scheduleAutosave()
       if emojiArt.background != oldValue.background {
         fetchBackgroundImageDataIfNeccessary()
       }
@@ -20,52 +44,52 @@ class EmojiArtDocument: ObservableObject {
   }
   
   init() {
-    if let url = Autosave.url, let autosavedEmojiArt = try? EmojiArtModel(url: url) {
-      emojiArt = autosavedEmojiArt
-      fetchBackgroundImageDataIfNeccessary()
-    } else {
+//    if let url = Autosave.url, let autosavedEmojiArt = try? EmojiArtModel(url: url) {
+//      emojiArt = autosavedEmojiArt
+//      fetchBackgroundImageDataIfNeccessary()
+//    } else {
       emojiArt = EmojiArtModel()
-    }
+//    }
   }
   
-  private struct Autosave {
-    static let filename = "Autosave.emojiart"
-    static var url: URL? {
-      let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-      return documentDirectory?.appendingPathComponent(filename)
-    }
-    static let coalescingInterval = 5.0
-  }
-  
-  private var autosaveTimer: Timer?
-  
-  private func scheduleAutosave() {
-    autosaveTimer?.invalidate()
-    autosaveTimer = Timer.scheduledTimer(withTimeInterval: Autosave.coalescingInterval, repeats: false) { _ in
-      self.autosave()
-    }
-  }
-  private func autosave() {
-    if let url = Autosave.url {
-      save(to: url)
-    }
-  }
-  
-  private func save(to url: URL) {
-    let thisFunction = "\(String(describing: self)).\(#function)"
-    do {
-      let data: Data = try emojiArt.json()
-      print("\(thisFunction) jason = \(String(data: data, encoding: .utf8) ?? "nil")")
-      try data.write(to: url)
-      print("\(thisFunction) succeeded")
-    }
-    catch let encodingError where encodingError is EncodingError {
-      print("\(thisFunction) cannot encode EmojiArt into JSON because \(encodingError.localizedDescription)")
-    }
-    catch {
-      print("Failed to \(thisFunction), error = \(error)")
-    }
-  }
+//  private struct Autosave {
+//    static let filename = "Autosave.emojiart"
+//    static var url: URL? {
+//      let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+//      return documentDirectory?.appendingPathComponent(filename)
+//    }
+//    static let coalescingInterval = 5.0
+//  }
+//
+//  private var autosaveTimer: Timer?
+//
+//  private func scheduleAutosave() {
+//    autosaveTimer?.invalidate()
+//    autosaveTimer = Timer.scheduledTimer(withTimeInterval: Autosave.coalescingInterval, repeats: false) { _ in
+//      self.autosave()
+//    }
+//  }
+//  private func autosave() {
+//    if let url = Autosave.url {
+//      save(to: url)
+//    }
+//  }
+//
+//  private func save(to url: URL) {
+//    let thisFunction = "\(String(describing: self)).\(#function)"
+//    do {
+//      let data: Data = try emojiArt.json()
+//      print("\(thisFunction) jason = \(String(data: data, encoding: .utf8) ?? "nil")")
+//      try data.write(to: url)
+//      print("\(thisFunction) succeeded")
+//    }
+//    catch let encodingError where encodingError is EncodingError {
+//      print("\(thisFunction) cannot encode EmojiArt into JSON because \(encodingError.localizedDescription)")
+//    }
+//    catch {
+//      print("Failed to \(thisFunction), error = \(error)")
+//    }
+//  }
   
   var emojis: [EmojiArtModel.Emoji] { emojiArt.emojis }
   var background: EmojiArtModel.Background { emojiArt.background }
