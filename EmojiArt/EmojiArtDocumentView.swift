@@ -12,7 +12,7 @@ struct EmojiArtDocumentView: View {
     var body: some View {
       VStack(spacing: 0) {
         documentBody
-        PaletteChooser(emojiFontSize: Constants.EmojiTextFont)
+        PaletteChooser(emojiFontSize: EmojiTextFont)
       }
     }
   
@@ -72,9 +72,7 @@ struct EmojiArtDocumentView: View {
     }
   }
   
-  private struct Constants {
-    static let EmojiTextFont: CGFloat = 60
-  }
+  @ScaledMetric var EmojiTextFont: CGFloat = 60
   
 
   private func fontSize(for emoji: EmojiArtModel.Emoji) -> CGFloat {
@@ -117,7 +115,7 @@ struct EmojiArtDocumentView: View {
           document.addEmoji(
             String(emoji),
             at: convertToEmojiCoordinates(location, in: geometry),
-            size: Constants.EmojiTextFont / zoomScale)
+            size: EmojiTextFont / zoomScale)
         }
       }
     }
