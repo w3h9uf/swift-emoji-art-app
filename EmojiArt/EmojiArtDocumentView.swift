@@ -61,6 +61,12 @@ struct EmojiArtDocumentView: View {
       .onReceive(document.$backgroundImage, perform: { image in
         zoomToFit(image, in: geometry.size)
       })
+      .toolbar(content: {
+        UndoButton(
+          undo: undoManager?.optionalUndoMenuItemTitle,
+          redo: undoManager?.optionalRedoMenuItemTitle
+        )
+      })
     }
   }
   
