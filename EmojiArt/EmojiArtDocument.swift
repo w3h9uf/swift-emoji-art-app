@@ -150,25 +150,44 @@ class EmojiArtDocument: ReferenceFileDocument {
   
   // MARK: - Intent(s)
   
-  func setBackground(_ background: EmojiArtModel.Background) {
+  func setBackground(_ background: EmojiArtModel.Background, undoManager: UndoManager?) {
+    undoablyPerform(operation: "Set Background", with: undoManager) {
+      emojiArt.background = background
+    }
     emojiArt.background = background
     print("backgound set to \(background)")
   }
   
-  func addEmoji(_ emoji: String, at location: (x: Int, y: Int), size: CGFloat) {
+  func addEmoji(_ emoji: String, at location: (x: Int, y: Int), size: CGFloat, undoManager: UndoManager?) {
     emojiArt.addEmoji(emoji, at: location, size: Int(size))
   }
   
-  func moveEmoji(_ emoji: EmojiArtModel.Emoji, by offset: CGSize) {
+  func moveEmoji(_ emoji: EmojiArtModel.Emoji, by offset: CGSize, undoManager: UndoManager?) {
     if let index = emojis.index(matching: emoji) {
       emojiArt.emojis[index].x += Int(offset.width)
       emojiArt.emojis[index].y += Int(offset.height)
     }
   }
   
-  func scaleEmoji(_ emoji: EmojiArtModel.Emoji, by scale: CGFloat) {
+  func scaleEmoji(_ emoji: EmojiArtModel.Emoji, by scale: CGFloat, undoManager: UndoManager?) {
     if let index = emojis.index(matching: emoji) {
       emojiArt.emojis[index].size = Int((CGFloat(emojiArt.emojis[index].size) * scale).rounded(.toNearestOrAwayFromZero))
     }
   }
+  
+  // MARK: - Undo
+  
+  private func undoablyPerform(operation: String, with undoManager: UndoManager? = nil, doit: () -> Void) {
+    let oldEmojiArt = emojiArt
+    doit()
+    undoManager?.registerUndo(withTarget: self) { myself in
+      myself.undoablyPerform(operation: operation, with: undoManager) {
+        myself.emojiArt = oldEmojiArt
+      }
+      myself.emojiArt = oldEmojiArt
+    }
+    undoManager?.setActionName(operation)
+  }
 }
+
+
