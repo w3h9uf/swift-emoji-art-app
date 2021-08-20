@@ -61,12 +61,36 @@ struct EmojiArtDocumentView: View {
       .onReceive(document.$backgroundImage, perform: { image in
         zoomToFit(image, in: geometry.size)
       })
-      .toolbar(content: {
-        UndoButton(
-          undo: undoManager?.optionalUndoMenuItemTitle,
-          redo: undoManager?.optionalRedoMenuItemTitle
-        )
-      })
+      .compactableToolbar {
+        if let undoManager = undoManager {
+          if undoManager.canUndo {
+            AnimatedActionButton(title: undoManager.undoActionName, systemImage: "arrow.uturn.backward") {
+              undoManager.undo()
+            }
+          }
+          if undoManager.canRedo {
+            AnimatedActionButton(title: undoManager.redoActionName, systemImage: "arrow.uturn.forward") {
+              undoManager.redo()
+            }
+          }
+        }
+        AnimatedActionButton(title: "Paste Background", systemImage: "doc.on.clipboard") {
+          pasteBackground()
+        }
+      }
+    }
+  }
+  
+  private func pasteBackground() {
+    if let imageData = UIPasteboard.general.image?.jpegData(compressionQuality: 1.0) {
+      document.setBackground(.imageData(imageData), undoManager: undoManager)
+    } else if let url = UIPasteboard.general.url?.imageURL {
+      document.setBackground(.url(url), undoManager: undoManager)
+    } else {
+      alertToShow = IdentifiableAlert(
+        title: "Paste Background",
+        message: "There is no image currently on the pasteboard."
+      )
     }
   }
   
